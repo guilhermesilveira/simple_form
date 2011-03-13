@@ -204,12 +204,76 @@ class InputTest < ActionView::TestCase
     assert_select 'input[min=18]'
   end
 
+  test 'input should infer min value from integer attributes with greater than validation using symbol' do
+    with_input_for @validating_user, :amount, :float
+    assert_no_select 'input[min]'
+
+    with_input_for @validating_user, :amount, :integer
+    assert_select 'input[min=11]'
+  end
+
+  test 'input should infer min value from integer attributes with greater than or equal to validation using symbol' do
+    with_input_for @validating_user, :attempts, :float
+    assert_select 'input[min=1]'
+
+    with_input_for @validating_user, :attempts, :integer
+    assert_select 'input[min=1]'
+  end
+
+  test 'input should infer min value from integer attributes with greater than validation using proc' do
+    with_input_for @other_validating_user, :amount, :float
+    assert_no_select 'input[min]'
+
+    with_input_for @other_validating_user, :amount, :integer
+    assert_select 'input[min=20]'
+  end
+
+  test 'input should infer min value from integer attributes with greater than or equal to validation using proc' do
+    with_input_for @other_validating_user, :attempts, :float
+    assert_select 'input[min=19]'
+
+    with_input_for @other_validating_user, :attempts, :integer
+    assert_select 'input[min=19]'
+  end
+
   test 'input should infer max value from attributes with less than validation' do
     with_input_for @other_validating_user, :age, :float
     assert_no_select 'input[max]'
 
     with_input_for @other_validating_user, :age, :integer
     assert_select 'input[max=99]'
+  end
+
+  test 'input should infer max value from attributes with less than validation using symbol' do
+    with_input_for @validating_user, :amount, :float
+    assert_no_select 'input[max]'
+
+    with_input_for @validating_user, :amount, :integer
+    assert_select 'input[max=99]'
+  end
+
+  test 'input should infer max value from attributes with less than or equal to validation using symbol' do
+    with_input_for @validating_user, :attempts, :float
+    assert_select 'input[max=100]'
+
+    with_input_for @validating_user, :attempts, :integer
+    assert_select 'input[max=100]'
+  end
+
+  test 'input should infer max value from attributes with less than validation using proc' do
+    with_input_for @other_validating_user, :amount, :float
+    assert_no_select 'input[max]'
+
+    with_input_for @other_validating_user, :amount, :integer
+    assert_select 'input[max=118]'
+  end
+
+  test 'input should infer max value from attributes with less than or equal to validation using proc' do
+    with_input_for @other_validating_user, :attempts, :float
+    assert_select 'input[max=119]'
+
+    with_input_for @other_validating_user, :attempts, :integer
+    assert_select 'input[max=119]'
   end
 
   test 'input should infer step value only from integer attribute' do
@@ -463,6 +527,13 @@ class InputTest < ActionView::TestCase
     end
   end
 
+  test 'input should mark the checked value when using boolean and radios' do
+    @user.active = false
+    with_input_for @user, :active, :radio
+    assert_no_select 'input[type=radio][value=true][checked]'
+    assert_select 'input[type=radio][value=false][checked]'
+  end
+
   test 'input should generate a boolean select with options by default for select types' do
     with_input_for @user, :active, :select
     assert_select 'select.select#user_active'
@@ -495,6 +566,13 @@ class InputTest < ActionView::TestCase
     @user.age = 18
     with_input_for @user, :age, :select, :collection => 18..60
     assert_select 'select option[selected=selected]', '18'
+  end
+
+  test 'input should mark the selected value when using booleans and select' do
+    @user.active = false
+    with_input_for @user, :active, :select
+    assert_no_select 'select option[selected][value=true]', 'Yes'
+    assert_select 'select option[selected][value=false]', 'No'
   end
 
   test 'input should set the correct value when using a collection that includes floats' do
@@ -604,6 +682,31 @@ class InputTest < ActionView::TestCase
     assert_select 'input[type=radio][value=carlos]'
     assert_select 'label.collection_radio', 'JOSE'
     assert_select 'label.collection_radio', 'CARLOS'
+  end
+
+  test 'input should allow overriding label and value method using a lambda for collection selects' do
+    with_input_for @user, :name, :select,
+                          :collection => ['Jose' , 'Carlos'],
+                          :label_method => lambda { |i| i.upcase },
+                          :value_method => lambda { |i| i.downcase }
+    assert_select 'select option[value=jose]', "JOSE"
+    assert_select 'select option[value=carlos]', "CARLOS"
+  end
+
+  test 'input should allow overriding only label but not value method using a lambda for collection select' do
+    with_input_for @user, :name, :select,
+                          :collection => ['Jose' , 'Carlos'],
+                          :label_method => lambda { |i| i.upcase }
+    assert_select 'select option[value=Jose]', "JOSE"
+    assert_select 'select option[value=Carlos]', "CARLOS"
+  end
+
+  test 'input should allow overriding only value but not label method using a lambda for collection select' do
+    with_input_for @user, :name, :select,
+                          :collection => ['Jose' , 'Carlos'],
+                          :value_method => lambda { |i| i.downcase }
+    assert_select 'select option[value=jose]', "Jose"
+    assert_select 'select option[value=carlos]', "Carlos"
   end
 
   test 'input should allow symbols for collections' do

@@ -10,7 +10,7 @@ SimpleForm.setup do |config|
   # CSS class to add to all hint tags.
   # config.hint_class = :hint
 
-  # Default tag used on errors.
+  # CSS class used on errors.
   # config.error_class = :error
 
   # Default tag used on errors.
@@ -52,6 +52,12 @@ SimpleForm.setup do |config|
   # How the label text should be generated altogether with the required text.
   # config.label_text = lambda { |label, required| "#{required} #{label}" }
 
+  # You can define the class to use on all labels. Default is nil.
+  # config.label_class = nil
+
+  # You can define the class to use on all forms. Default is simple_form.
+  # config.form_class = :simple_form
+
   # Whether attributes are required by default (or not). Default is true.
   # config.required_by_default = true
 
@@ -61,7 +67,7 @@ SimpleForm.setup do |config|
   # config.input_mappings = { /count/ => :integer }
 
   # Collection of methods to detect if a file type was given.
-  # config.file_methods = [ :file?, :public_filename ]
+  # config.file_methods = [ :mounted_as, :file?, :public_filename ]
 
   # Default priority for time_zone inputs.
   # config.time_zone_priority = nil

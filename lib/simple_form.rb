@@ -79,6 +79,14 @@ module SimpleForm
   mattr_accessor :label_text
   @@label_text = lambda { |label, required| "#{required} #{label}" }
 
+  # You can define the class to use on all labels. Default is nil.
+  mattr_accessor :label_class
+  @@label_class = nil
+
+  # You can define the class to use on all forms. Default is simple_form.
+  mattr_accessor :form_class
+  @@form_class = :simple_form
+
   # Whether attributes are required by default (or not).
   mattr_accessor :required_by_default
   @@required_by_default = true

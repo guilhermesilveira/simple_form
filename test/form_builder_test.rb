@@ -9,6 +9,12 @@ class FormBuilderTest < ActionView::TestCase
     end
   end
 
+  def with_custom_form_for(object, *args, &block)
+    with_concat_custom_form_for(object) do |f|
+      f.input(*args, &block)
+    end
+  end
+
   def with_button_for(object, *args)
     with_concat_form_for(object) do |f|
       f.button(*args)
@@ -76,11 +82,27 @@ class FormBuilderTest < ActionView::TestCase
     end
   end
 
+  test 'builder should allow adding custom input mappings for integer input types' do
+    swap SimpleForm, :input_mappings => { /lock_version/ => :hidden } do
+      with_form_for @user, :lock_version
+      assert_no_select 'form input#user_lock_version.integer'
+      assert_select 'form input#user_lock_version.hidden'
+    end
+  end
+
   test 'builder uses the first matching custom input map when more than one match' do
     swap SimpleForm, :input_mappings => { /count$/ => :integer, /^post_/ => :password } do
       with_form_for @user, :post_count
       assert_no_select 'form input#user_post_count.password'
       assert_select 'form input#user_post_count.numeric.integer'
+    end
+  end
+
+  test 'builder uses the custom map only for matched attributes' do
+    swap SimpleForm, :input_mappings => { /lock_version/ => :hidden } do
+      with_form_for @user, :post_count
+      assert_no_select 'form input#user_post_count.hidden'
+      assert_select 'form input#user_post_count.string'
     end
   end
 
@@ -170,6 +192,14 @@ class FormBuilderTest < ActionView::TestCase
     assert_select 'form input#user_avatar.file'
   end
 
+  test 'builder should generate file for attributes that are real db columns but have file methods' do
+    @user.home_picture = mock("file")
+    @user.home_picture.expects(:respond_to?).with(:mounted_as).returns(true)
+
+    with_form_for @user, :home_picture
+    assert_select 'form input#user_home_picture.file'
+  end
+
   test 'build should generate select if a collection is given' do
     with_form_for @user, :age, :collection => 1..60
     assert_select 'form select#user_age.select'
@@ -190,6 +220,13 @@ class FormBuilderTest < ActionView::TestCase
   end
 
   # COMMON OPTIONS
+  test 'builder should add chosen form class' do
+    swap SimpleForm, :form_class => :my_custom_class do
+      with_form_for @user, :name
+      assert_select 'form.my_custom_class'
+    end
+  end
+
   test 'builder should allow passing options to input' do
     with_form_for @user, :name, :input_html => { :class => 'my_input', :id => 'my_input' }
     assert_select 'form input#my_input.my_input.string'
@@ -590,5 +627,11 @@ class FormBuilderTest < ActionView::TestCase
 
     assert_select 'form ul', :count => 1
     assert_select 'form ul li', :count => 3
+  end
+
+  # CUSTOM FORM BUILDER
+  test 'custom builder should inherit mappings' do
+    with_custom_form_for @user, :email
+    assert_select 'form input[type=email]#user_email.custom'
   end
 end
