@@ -634,4 +634,5 @@ class FormBuilderTest < ActionView::TestCase
     with_custom_form_for @user, :email
     assert_select 'form input[type=email]#user_email.custom'
   end
+  
 end

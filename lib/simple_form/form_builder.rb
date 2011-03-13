@@ -12,7 +12,12 @@ module SimpleForm
     map_type :date, :time, :datetime,              :to => SimpleForm::Inputs::DateTimeInput
     map_type :country, :time_zone,                 :to => SimpleForm::Inputs::PriorityInput
     map_type :boolean,                             :to => SimpleForm::Inputs::BooleanInput
-
+    
+    def initialize(*args, &block)
+      super
+      self.extend FormBuilder.module_for(@object)
+    end
+    
     # Basic input helper, combines all components in the stack to generate
     # input html based on options the user define and some guesses through
     # database column information. By default a call to input will generate
@@ -297,12 +302,34 @@ module SimpleForm
 
     def method_missing(sym,*args, &block)
       if(@object && find_association_reflection(sym))
+        add_field_invoke("association", sym,*args, &block)
         association(sym, *args, &block)
       elsif(@object.nil? || @object.respond_to?(sym))
+        add_field_invoke("input", sym,*args, &block)
         input(sym, *args, &block)
       else
         super
       end
+    end
+    
+    def add_field_invoke(invoker, sym, *args, &block)
+      content = "def #{sym.to_s}(*args, &block)
+          #{invoker}(:#{sym.to_s}, *args, &block)
+        end"
+      FormBuilder.module_for(@object).module_eval content
+    end
+
+    def self.modules
+      @modules ||= {}
+    end
+    
+    def self.module_for(obj)
+      type = obj.kind_of?(Symbol) ? obj : obj.class
+      unless modules[type]
+        name = "Simple#{type}Form"
+        modules[type] = module_eval "module #{name}; end; #{name}"
+      end
+      modules[type]
     end
   end
 end
